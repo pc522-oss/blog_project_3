@@ -1,0 +1,209 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>My Blog</title>
+
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet" />
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <link href="/styles.css" rel="stylesheet" />
+</head>
+
+<body>
+
+  <!-- NAVBAR -->
+  <nav class="navbar-custom mb-5">
+    <div class="container" style="max-width:800px;">
+      <div class="d-flex align-items-center justify-content-between">
+        <div class="d-flex align-items-center">
+          <i class="bi bi-pencil-square me-2" style="color:#818cf8;font-size:1.2rem;"></i>
+          <span class="navbar-brand-text">Patrick's<span> Blog</span></span>
+          
+        </div>
+        
+      </div>
+    </div>
+  </nav>
+
+  <div class="container" style="max-width:800px;">
+
+    <!-- SUCCESS TOAST -->
+    <div class="toast-container position-fixed bottom-0 end-0 p-3">
+      <div id="successToast" class="toast text-bg-success border-0" role="alert">
+        <div class="d-flex">
+          <div class="toast-body fw-semibold">
+            <i class="bi bi-check-circle-fill me-2"></i>Changes saved successfully.
+          </div>
+          <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"></button>
+        </div>
+      </div>
+    </div>
+
+    <!-- CREATE POST -->
+    <div class="create-card mb-5">
+      <div class="section-label">
+        <i class="bi bi-plus-circle-fill"></i> New Post
+      </div>
+      <form action="/new" method="POST">
+        <div class="row g-3 mb-3">
+          <div class="col-sm-6">
+            <input type="text" name="author" placeholder="Your name" class="form-control" required>
+          </div>
+          <div class="col-sm-6">
+            <input type="text" name="title" placeholder="Post title" class="form-control" required>
+          </div>
+        </div>
+        <textarea name="content" placeholder="What's on your mind?" class="form-control mb-3" rows="4" required></textarea>
+        <div class="d-flex justify-content-end">
+          <button type="submit" class="btn-publish">
+            <i class="bi bi-send me-1"></i> Publish Post
+          </button>
+        </div>
+      </form>
+    </div>
+
+    <!-- POSTS HEADING -->
+    <div class="posts-heading">
+      <i class="bi bi-journals"></i> All Posts
+      <% if (posts.length > 0) { %>
+        <span class="post-count-badge"><%= posts.length %></span>
+      <% } %>
+    </div>
+
+    <!-- POST LIST -->
+    <% if (posts.length === 0) { %>
+      <div class="empty-state">
+        <i class="bi bi-chat-square-text"></i>
+        <p class="fw-semibold mb-1" style="color:#64748b;">No posts yet</p>
+        <p class="small">Be the first to share something above!</p>
+      </div>
+    <% } else { %>
+      <% posts.forEach(post => { %>
+        <div class="post-card mb-4">
+          <div class="post-card-inner">
+            <div class="post-title"><%= post.title %></div>
+            <div class="post-body"><%= post.content %></div>
+            <div class="post-meta-row">
+              <div class="author-block">
+                <div class="author-avatar"><%= post.author.charAt(0) %></div>
+                <div>
+                  <div class="author-name"><%= post.author %></div>
+                  <div class="post-date">
+                    <i class="bi bi-clock me-1"></i><%= post.createdAt.toLocaleString() %>
+                  </div>
+                </div>
+              </div>
+              <div class="d-flex gap-2">
+                <button class="btn-edit-card" onclick="openEditModal('<%= encodeURIComponent(JSON.stringify(post)) %>')">
+                  <i class="bi bi-pencil me-1"></i>Edit
+                </button>
+                <button class="btn-del-card" onclick="openDeleteModal('<%= post.id %>')">
+                  <i class="bi bi-trash me-1"></i>Delete
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      <% }) %>
+    <% } %>
+
+  </div>
+
+  <!-- EDIT MODAL -->
+  <div class="modal fade" id="editModal" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+      <div class="modal-content">
+        <div class="modal-header modal-hdr-edit">
+          <h5 class="modal-title"><i class="bi bi-pencil-square me-2"></i>Edit Post</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+        </div>
+        <div class="modal-body">
+          <form id="editForm" method="POST">
+            <div class="mb-3">
+              <label class="form-label">Author</label>
+              <input type="text" name="author" id="editAuthor" class="form-control" required>
+            </div>
+            <div class="mb-3">
+              <label class="form-label">Title</label>
+              <input type="text" name="title" id="editTitle" class="form-control" required>
+            </div>
+            <div class="mb-3">
+              <label class="form-label">Content</label>
+              <textarea name="content" id="editContent" class="form-control" rows="5" required></textarea>
+            </div>
+            <div class="d-flex justify-content-end">
+              <button type="submit" class="btn-save-modal">
+                <i class="bi bi-check-lg me-1"></i>Save Changes
+              </button>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- DELETE MODAL -->
+  <div class="modal fade" id="deleteModal" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+      <div class="modal-content">
+        <div class="modal-header modal-hdr-delete">
+          <h5 class="modal-title"><i class="bi bi-trash me-2"></i>Delete Post</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+        </div>
+        <div class="modal-body text-center py-4">
+          <div class="delete-icon-circle">
+            <i class="bi bi-exclamation-triangle-fill text-danger"></i>
+          </div>
+          <p class="fw-semibold mb-1">Are you sure?</p>
+          <p class="text-muted small mb-0">This post will be permanently deleted.</p>
+        </div>
+        <div class="modal-footer justify-content-center gap-2">
+          <button type="button" class="btn btn-light border" data-bs-dismiss="modal">
+            <i class="bi bi-x me-1"></i>Cancel
+          </button>
+          <form id="deleteForm" method="POST" style="display:inline;">
+            <button type="submit" class="btn-danger-modal">
+              <i class="bi bi-trash me-1"></i>Yes, Delete
+            </button>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- FOOTER -->
+  <footer class="text-center">
+    <small>© 2026 Patrick's Blog &nbsp;</small>
+  </footer>
+
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+  <script>
+    const editModal    = new bootstrap.Modal(document.getElementById("editModal"));
+    const deleteModal  = new bootstrap.Modal(document.getElementById("deleteModal"));
+    const editForm     = document.getElementById("editForm");
+    const deleteForm   = document.getElementById("deleteForm");
+    const successToast = new bootstrap.Toast(document.getElementById("successToast"));
+
+    function openEditModal(encodedPost) {
+      const post = JSON.parse(decodeURIComponent(encodedPost));
+      document.getElementById("editAuthor").value  = post.author;
+      document.getElementById("editTitle").value   = post.title;
+      document.getElementById("editContent").value = post.content;
+      editForm.action = `/edit/${post.id}`;
+      editModal.show();
+    }
+
+    function openDeleteModal(postId) {
+      deleteForm.action = `/delete/${postId}`;
+      deleteModal.show();
+    }
+
+    if (window.location.search.includes("success")) {
+      successToast.show();
+    }
+  </script>
+
+</body>
+</html>
