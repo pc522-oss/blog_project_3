@@ -17,15 +17,32 @@
   <nav class="navbar-custom mb-5">
     <div class="container" style="max-width:800px;">
       <div class="d-flex align-items-center justify-content-between">
+
         <div class="d-flex align-items-center">
           <i class="bi bi-pencil-square me-2" style="color:#818cf8;font-size:1.2rem;"></i>
-          <span class="navbar-brand-text">Patrick's<span> Blog</span></span>
-          
+          <a href="/" class="navbar-brand-text" style="text-decoration:none;">
+            Patrick's<span> Blog</span>
+          </a>
         </div>
-        
+
+        <!-- LOGIN / SIGNUP OR WELCOME -->
+        <div class="d-flex align-items-center gap-3">
+
+          <% if (!sessionUser) { %>
+            <a href="/signin" class="btn btn-outline-primary btn-sm">Sign In</a>
+            <a href="/signup" class="btn btn-primary btn-sm">Sign Up</a>
+          <% } else { %>
+            <span class="text-white fw-semibold">
+              Welcome, <%= sessionUser.name %>
+            </span>
+            <a href="/logout" class="btn btn-danger btn-sm">Logout</a>
+          <% } %>
+        </div>
+
       </div>
     </div>
   </nav>
+
 
   <div class="container" style="max-width:800px;">
 
@@ -42,27 +59,26 @@
     </div>
 
     <!-- CREATE POST -->
-    <div class="create-card mb-5">
-      <div class="section-label">
-        <i class="bi bi-plus-circle-fill"></i> New Post
+    <% if (sessionUser) { %>
+      <div class="create-card mb-5">
+        <div class="section-label">
+          <i class="bi bi-plus-circle-fill"></i> New Post
+        </div>
+        <form action="/new" method="POST">
+          <div class="row g-3 mb-3">
+            <div class="col-sm-12">
+              <input type="text" name="title" placeholder="Post title" class="form-control" required>
+            </div>
+          </div>
+          <textarea name="content" placeholder="What's on your mind?" class="form-control mb-3" rows="4" required></textarea>
+          <div class="d-flex justify-content-end">
+            <button type="submit" class="btn-publish">
+              <i class="bi bi-send me-1"></i> Publish Post
+            </button>
+          </div>
+        </form>
       </div>
-      <form action="/new" method="POST">
-        <div class="row g-3 mb-3">
-          <div class="col-sm-6">
-            <input type="text" name="author" placeholder="Your name" class="form-control" required>
-          </div>
-          <div class="col-sm-6">
-            <input type="text" name="title" placeholder="Post title" class="form-control" required>
-          </div>
-        </div>
-        <textarea name="content" placeholder="What's on your mind?" class="form-control mb-3" rows="4" required></textarea>
-        <div class="d-flex justify-content-end">
-          <button type="submit" class="btn-publish">
-            <i class="bi bi-send me-1"></i> Publish Post
-          </button>
-        </div>
-      </form>
-    </div>
+    <% } %>
 
     <!-- POSTS HEADING -->
     <div class="posts-heading">
@@ -83,27 +99,39 @@
       <% posts.forEach(post => { %>
         <div class="post-card mb-4">
           <div class="post-card-inner">
+
             <div class="post-title"><%= post.title %></div>
-            <div class="post-body"><%= post.content %></div>
+            <div class="post-body"><%= post.body %></div>
+
             <div class="post-meta-row">
               <div class="author-block">
-                <div class="author-avatar"><%= post.author.charAt(0) %></div>
+                <div class="author-avatar"><%= post.creator_name.charAt(0) %></div>
                 <div>
-                  <div class="author-name"><%= post.author %></div>
+                  <div class="author-name"><%= post.creator_name %></div>
                   <div class="post-date">
-                    <i class="bi bi-clock me-1"></i><%= post.createdAt.toLocaleString() %>
+                    <i class="bi bi-clock me-1"></i>
+                    <%= new Date(post.date_created).toLocaleString() %>
                   </div>
                 </div>
               </div>
+
+              <!-- EDIT / DELETE ONLY FOR OWNER -->
               <div class="d-flex gap-2">
-                <button class="btn-edit-card" onclick="openEditModal('<%= encodeURIComponent(JSON.stringify(post)) %>')">
-                  <i class="bi bi-pencil me-1"></i>Edit
-                </button>
-                <button class="btn-del-card" onclick="openDeleteModal('<%= post.id %>')">
-                  <i class="bi bi-trash me-1"></i>Delete
-                </button>
+                <% if (sessionUser && sessionUser.user_id === post.creator_id) { %>
+                  <button class="btn-edit-card"
+                    onclick="openEditModal('<%= encodeURIComponent(JSON.stringify(post)) %>')">
+                    <i class="bi bi-pencil me-1"></i>Edit
+                  </button>
+
+                  <button class="btn-del-card"
+                    onclick="openDeleteModal('<%= post.blog_id %>')">
+                    <i class="bi bi-trash me-1"></i>Delete
+                  </button>
+                <% } %>
               </div>
+
             </div>
+
           </div>
         </div>
       <% }) %>
@@ -121,10 +149,6 @@
         </div>
         <div class="modal-body">
           <form id="editForm" method="POST">
-            <div class="mb-3">
-              <label class="form-label">Author</label>
-              <input type="text" name="author" id="editAuthor" class="form-control" required>
-            </div>
             <div class="mb-3">
               <label class="form-label">Title</label>
               <input type="text" name="title" id="editTitle" class="form-control" required>
@@ -188,10 +212,9 @@
 
     function openEditModal(encodedPost) {
       const post = JSON.parse(decodeURIComponent(encodedPost));
-      document.getElementById("editAuthor").value  = post.author;
       document.getElementById("editTitle").value   = post.title;
-      document.getElementById("editContent").value = post.content;
-      editForm.action = `/edit/${post.id}`;
+      document.getElementById("editContent").value = post.body;
+      editForm.action = `/edit/${post.blog_id}`;
       editModal.show();
     }
 
